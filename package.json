@@ -6,19 +6,37 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "typeorm": "ts-node --project ./tsconfig.json -r tsconfig-paths/register ./src/typeorm/typeOrm.custom-cli.ts",
+    "typeorm:run-migration": "npm run typeorm migration:run -- -d ./src/typeorm/typeOrm.config.ts",
+    "typeorm:generate-migration": "npm run typeorm -- -d ./src/typeorm/typeOrm.config.ts migration:generate ./src/typeorm/migrations/db",
+    "typeorm:create-migration": "npm run typeorm -- migration:create ./src/typeorm/migrations/db",
+    "typeorm:revert-migration": "npm run typeorm -- -d ./src/typeorm/typeOrm.config.ts migration:revert",
+    "migrate:generate": "npm run typeorm:generate-migration",
+    "migrate:run": "npm run typeorm:run-migration",
+    "migrate:revert": "npm run typeorm:revert-migration"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@types/express": "^5.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
-    "nodemon": "^3.1.7"
+    "mysql2": "^3.11.3",
+    "nodemon": "^3.1.7",
+    "reflect-metadata": "^0.2.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "tsconfig-paths": "^4.2.0",
+    "typeorm": "^0.3.20"
   },
   "devDependencies": {
     "@types/node": "^22.7.4",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
   }
