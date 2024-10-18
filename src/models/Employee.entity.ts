@@ -4,8 +4,10 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { DepartmentEntity } from './Department.entity';
+import { DepartmentHistoryEntity } from './DepartmentHistory.entity';
 
 @Entity('employee')
 export class EmployeeEntity {
@@ -31,5 +33,11 @@ export class EmployeeEntity {
     nullable: true,
   })
   @JoinColumn({ name: 'department_id' })
-  department?: DepartmentEntity;
+  department: DepartmentEntity;
+
+  @OneToMany(
+    () => DepartmentHistoryEntity,
+    departmentHistory => departmentHistory.employee,
+  )
+  departmentHistory: DepartmentHistoryEntity[];
 }

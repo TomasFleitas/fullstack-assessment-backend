@@ -4,6 +4,7 @@ import {
   IsDateString,
   IsPhoneNumber,
   IsOptional,
+  IsInt,
 } from 'class-validator';
 
 export class CreateEmployeeDto {
@@ -18,9 +19,9 @@ export class CreateEmployeeDto {
   @IsDateString()
   hireDate: string;
 
-  @IsString()
+  @IsInt()
   @IsNotEmpty()
-  department: string;
+  departmentId: number;
 
   @IsPhoneNumber()
   @IsOptional()
@@ -37,7 +38,7 @@ export const CreateEmployeeSchema = {
     firstName: { type: 'string', example: 'John' },
     lastName: { type: 'string', example: 'Doe' },
     hireDate: { type: 'string', format: 'date', example: '2022-01-01' },
-    department: { type: 'string', example: 'IT' },
+    departmentId: { type: 'integer', example: 1 },
     phone: { type: 'string', example: '+123456789' },
     address: { type: 'string', example: '123 Main St' },
   },

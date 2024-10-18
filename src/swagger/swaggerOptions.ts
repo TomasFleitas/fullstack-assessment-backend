@@ -4,6 +4,7 @@ import { EmployeeSchema } from '../DTOs/employee/Employee.dto';
 import { UpdateEmployeeSchema } from '../DTOs/employee/UpdateEmployee.dto';
 import { DepartmentSchema } from '../DTOs/department/Department.dto';
 import { PORT } from '../utils/const';
+import { DepartmentHistorySchema } from '../DTOs/department/DepartmentHistory.dto';
 
 export const swaggerOptions: OAS3Options = {
   swaggerDefinition: {
@@ -35,6 +36,7 @@ export const swaggerOptions: OAS3Options = {
         },
         // Departments schemas
         DepartmentSchema,
+        DepartmentHistorySchema,
       },
     },
     servers: [

@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { getRepositories } from '../utils/tools';
-import { DepartmentEntity } from '../models/Department.entity';
+import { DepartmentService } from '../services/department.service';
 
 const DepartmentRoutes = Router();
+
+const departmentService = new DepartmentService();
 
 /**
  * @swagger
@@ -25,13 +26,11 @@ const DepartmentRoutes = Router();
  */
 DepartmentRoutes.get('/', async (req, res) => {
   try {
-    const [departmentRepository] = getRepositories(DepartmentEntity);
-
-    const departments = await departmentRepository.find();
+    const departments = await departmentService.getAll();
 
     res.status(200).json(departments);
-  } catch (error) {
-    res.status(400).json({ error: 'Error retrieving departments' });
+  } catch (error: any) {
+    res.status(error.status || 400).json({ error: error.message });
   }
 });
 

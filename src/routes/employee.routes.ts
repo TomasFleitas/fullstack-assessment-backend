@@ -1,12 +1,15 @@
 import { Router } from 'express';
-import { EmployeeEntity } from '../models/Employee.entity';
-import { getRepositories } from '../utils/tools';
-import { CreateEmployeeDto } from '../DTOs/employee/CreateEmployee.dto';
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { UpdateEmployeeDto } from '../DTOs/employee/UpdateEmployee.dto';
+import { EmployeeService } from '../services/employee.service';
+import { BadRequest } from '../errors';
+import { CreateEmployeeDto } from '../DTOs/employee/CreateEmployee.dto';
+import { DepartmentService } from '../services/department.service';
 
 const EmployeeRoutes = Router();
+const employeeService = new EmployeeService();
+const departmentService = new DepartmentService();
 
 /**
  * @swagger
@@ -36,17 +39,14 @@ EmployeeRoutes.post('/', async (req, res) => {
     const errors = await validate(plainToInstance(CreateEmployeeDto, req.body));
 
     if (errors.length > 0) {
-      res.status(400).json(errors);
-      return;
+      throw new BadRequest(errors.join('\n'));
     }
 
-    const [employeeRepository] = getRepositories(EmployeeEntity);
+    const newEmployee = await employeeService.create(req.body);
 
-    const newEmployee = employeeRepository.create(req.body);
-    await employeeRepository.save(newEmployee);
     res.status(201).json(newEmployee);
-  } catch (error) {
-    res.status(400).json({ error: 'Error creating employee' });
+  } catch (error: any) {
+    res.status(error.status || 400).json({ error: error.message });
   }
 });
 
@@ -69,10 +69,8 @@ EmployeeRoutes.post('/', async (req, res) => {
  */
 EmployeeRoutes.get('/', async (req, res) => {
   try {
-    const [employeeRepository] = getRepositories(EmployeeEntity);
-    const employees = await employeeRepository.find({
-      relations: { department: true },
-    });
+    const employees = await employeeService.getAll();
+
     res.status(200).json(employees);
   } catch (error) {
     res.status(400).json({ error: 'Error retrieving employees' });
@@ -104,17 +102,13 @@ EmployeeRoutes.get('/', async (req, res) => {
  */
 EmployeeRoutes.get('/:id', async (req, res) => {
   try {
-    const [employeeRepository] = getRepositories(EmployeeEntity);
+    const employeeId = parseInt(req.params.id);
 
-    const employee = await employeeRepository.findOne({
-      where: { id: parseInt(req.params.id) },
-      relations: ['department'],
-    });
-
-    if (!employee) {
-      res.status(404).json({ error: 'Employee not found' });
-      return;
+    if (isNaN(employeeId)) {
+      throw new BadRequest('Invalid employee ID');
     }
+
+    const employee = await employeeService.getById(employeeId);
 
     res.status(200).json(employee);
   } catch (error) {
@@ -150,30 +144,27 @@ EmployeeRoutes.get('/:id', async (req, res) => {
  */
 EmployeeRoutes.put('/:id', async (req, res) => {
   try {
+    const employeeId = parseInt(req.params.id);
+
+    if (isNaN(employeeId)) {
+      throw new BadRequest('Invalid employee ID');
+    }
+
     const employeeDto = plainToInstance(UpdateEmployeeDto, req.body);
-
     const errors = await validate(employeeDto);
+
     if (errors.length > 0) {
-      res.status(400).json(errors);
-      return;
+      throw new BadRequest(errors.join('\n'));
     }
 
-    const [employeeRepository] = getRepositories(EmployeeEntity);
+    const updatedEmployee = await employeeService.update(
+      employeeId,
+      employeeDto,
+    );
 
-    const employee = await employeeRepository.findOne({
-      where: { id: parseInt(req.params.id) },
-    });
-
-    if (!employee) {
-      res.status(404).json({ error: 'Employee not found' });
-      return;
-    }
-
-    employeeRepository.merge(employee, req.body);
-    const updatedEmployee = await employeeRepository.save(employee);
     res.status(200).json(updatedEmployee);
-  } catch (error) {
-    res.status(400).json({ error: 'Error updating employee' });
+  } catch (error: any) {
+    res.status(error.status || 400).json({ error: error.message });
   }
 });
 
@@ -198,18 +189,58 @@ EmployeeRoutes.put('/:id', async (req, res) => {
  */
 EmployeeRoutes.delete('/:id', async (req, res) => {
   try {
-    const [employeeRepository] = getRepositories(EmployeeEntity);
+    const employeeId = parseInt(req.params.id);
 
-    const result = await employeeRepository.delete(req.params.id);
-
-    if (result.affected === 0) {
-      res.status(404).json({ error: 'Employee not found' });
-      return;
+    if (isNaN(employeeId)) {
+      throw new BadRequest('Invalid employee ID');
     }
 
+    await employeeService.deleteEmployee(employeeId);
+
     res.status(200).json({ message: 'Employee deleted successfully' });
-  } catch (error) {
-    res.status(400).json({ error: 'Error deleting employee' });
+  } catch (error: any) {
+    res.status(error.status || 400).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /employees/{id}/department-history:
+ *   get:
+ *     summary: Get department change history for an employee
+ *     tags:
+ *       - Employees
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Department history retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/DepartmentHistorySchema'
+ *       400:
+ *         description: Error retrieving department history
+ */
+EmployeeRoutes.get('/:id/department-history', async (req, res) => {
+  try {
+    const employeeId = parseInt(req.params.id);
+
+    if (isNaN(employeeId)) {
+      throw new BadRequest('Invalid employee ID');
+    }
+
+    const history = await departmentService.getHistory(employeeId);
+
+    res.status(200).json(history);
+  } catch (error: any) {
+    res.status(error.status || 400).json({ error: error.message });
   }
 });
 
