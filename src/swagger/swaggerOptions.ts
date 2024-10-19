@@ -5,6 +5,8 @@ import { UpdateEmployeeSchema } from '../DTOs/employee/UpdateEmployee.dto';
 import { DepartmentSchema } from '../DTOs/department/Department.dto';
 import { PORT } from '../utils/const';
 import { DepartmentHistorySchema } from '../DTOs/department/DepartmentHistory.dto';
+import { UpdateEmployeeDepartmentSchema } from '../DTOs/employee/UpdateEmployeeDepartment.dto';
+import { UpdateEmployeeStatusSchema } from '../DTOs/employee/UpdateEmployeeStatus.dto';
 
 export const swaggerOptions: OAS3Options = {
   swaggerDefinition: {
@@ -19,6 +21,8 @@ export const swaggerOptions: OAS3Options = {
         // Employee Schemas
         EmployeeSchema,
         CreateEmployeeSchema,
+        UpdateEmployeeStatusSchema,
+        UpdateEmployeeDepartmentSchema,
         UpdateEmployeeSchema,
         GetEmployeeByIdSchema: {
           type: 'object',

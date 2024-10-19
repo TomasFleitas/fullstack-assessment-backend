@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { DepartmentEntity } from './Department.entity';
 import { DepartmentHistoryEntity } from './DepartmentHistory.entity';
+import { EmployeeStatusEnum } from '../enums/employee.enum';
 
 @Entity('employee')
 export class EmployeeEntity {
@@ -26,12 +27,17 @@ export class EmployeeEntity {
   @Column({ type: 'varchar', length: 20 })
   phone: string;
 
+  @Column({
+    type: 'enum',
+    enum: EmployeeStatusEnum,
+    default: EmployeeStatusEnum.ACTIVE,
+  })
+  status: string;
+
   @Column({ type: 'varchar', length: 255 })
   address: string;
 
-  @ManyToOne(() => DepartmentEntity, department => department.employees, {
-    nullable: true,
-  })
+  @ManyToOne(() => DepartmentEntity, department => department.employees)
   @JoinColumn({ name: 'department_id' })
   department: DepartmentEntity;
 

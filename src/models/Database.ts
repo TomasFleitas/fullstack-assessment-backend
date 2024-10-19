@@ -26,4 +26,12 @@ export class Database {
   public getRepository<T>(entity: { new (): T }) {
     return this.dataSource.getRepository(entity);
   }
+
+  public getDataSource() {
+    return this.dataSource;
+  }
+
+  public async destroy() {
+    await this.dataSource.destroy();
+  }
 }

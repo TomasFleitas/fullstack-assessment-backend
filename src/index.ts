@@ -6,9 +6,10 @@ import DepartmentRoutes from './routes/department.routes';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerOptions } from './swagger/swaggerOptions';
+import cors from 'cors';
 
 const app = express();
-
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

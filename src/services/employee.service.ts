@@ -5,45 +5,51 @@ import { DepartmentHistoryEntity } from '../models/DepartmentHistory.entity';
 import { CreateEmployeeDto } from '../DTOs/employee/CreateEmployee.dto';
 import { BadRequest, NotFound } from '../errors';
 import { UpdateEmployeeDto } from '../DTOs/employee/UpdateEmployee.dto';
+import { Database } from '../models/Database';
 
 export class EmployeeService {
   async create(employeeData: CreateEmployeeDto) {
-    const [
-      employeeRepository,
-      departmentRepository,
-      departmentHistoryRepository,
-    ] = getRepositories(
-      EmployeeEntity,
-      DepartmentEntity,
-      DepartmentHistoryEntity,
-    );
+    const dataSource = Database.getInstance().getDataSource();
 
-    const departmentId = employeeData.departmentId;
+    return await dataSource.transaction(async transaction => {
+      const employeeRepository = transaction.getRepository(EmployeeEntity);
+      const departmentRepository = transaction.getRepository(DepartmentEntity);
+      const departmentHistoryRepository = transaction.getRepository(
+        DepartmentHistoryEntity,
+      );
 
-    let department;
+      const departmentId = employeeData.departmentId;
 
-    if (departmentId) {
-      department = await departmentRepository.findOne({
-        where: { id: departmentId },
-      });
-      if (!department) {
-        throw new BadRequest('Not Found Department');
+      let department;
+
+      if (departmentId) {
+        department = await departmentRepository.findOne({
+          where: { id: departmentId },
+        });
+
+        if (!department) {
+          throw new BadRequest('Department not found');
+        }
       }
-    }
 
-    const newEmployee = employeeRepository.create(employeeData);
+      const newEmployee = employeeRepository.create(employeeData);
 
-    await employeeRepository.save({ ...newEmployee, department });
+      if (department) {
+        newEmployee.department = department;
+      }
 
-    if (department) {
-      const departmentHistory = departmentHistoryRepository.create({
-        employee: newEmployee,
-        department: department,
-      });
-      await departmentHistoryRepository.save(departmentHistory);
-    }
+      await employeeRepository.save(newEmployee);
 
-    return newEmployee;
+      if (department) {
+        const departmentHistory = departmentHistoryRepository.create({
+          employee: newEmployee,
+          department,
+        });
+        await departmentHistoryRepository.save(departmentHistory);
+      }
+
+      return newEmployee;
+    });
   }
 
   async getAll() {
@@ -58,7 +64,7 @@ export class EmployeeService {
 
     const employee = await employeeRepository.findOne({
       where: { id },
-      relations: ['department'],
+      relations: { department: true },
     });
 
     if (!employee) {
@@ -79,14 +85,7 @@ export class EmployeeService {
       DepartmentHistoryEntity,
     );
 
-    const employee = await employeeRepository.findOne({
-      where: { id },
-      relations: ['department'],
-    });
-
-    if (!employee) {
-      throw new NotFound('Employee not found');
-    }
+    const employee = await this.getById(id);
 
     let newDepartment;
     if (updateEmployee.departmentId) {
@@ -127,5 +126,51 @@ export class EmployeeService {
     }
 
     await employeeRepository.delete(id);
+  }
+
+  async updateDepartment(employeeId: number, departmentId: number) {
+    const [
+      employeeRepository,
+      departmentRepository,
+      departmentHistoryRepository,
+    ] = getRepositories(
+      EmployeeEntity,
+      DepartmentEntity,
+      DepartmentHistoryEntity,
+    );
+
+    const employee = await this.getById(employeeId);
+
+    const newDepartment = await departmentRepository.findOne({
+      where: { id: departmentId },
+    });
+
+    if (!newDepartment) {
+      throw new NotFound('Department not found');
+    }
+
+    if (employee.department?.id !== newDepartment.id) {
+      employee.department = newDepartment;
+      const departmentHistory = departmentHistoryRepository.create({
+        employee: employee,
+        department: newDepartment,
+      });
+      await departmentHistoryRepository.save(departmentHistory);
+    }
+
+    await employeeRepository.save(employee);
+
+    return employee;
+  }
+
+  async updateStatus(id: number, status: string) {
+    const [employeeRepository] = getRepositories(EmployeeEntity);
+
+    const employee = await this.getById(id);
+
+    employee.status = status;
+    await employeeRepository.save(employee);
+
+    return employee;
   }
 }

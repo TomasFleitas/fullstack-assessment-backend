@@ -6,6 +6,9 @@ import { EmployeeService } from '../services/employee.service';
 import { BadRequest } from '../errors';
 import { CreateEmployeeDto } from '../DTOs/employee/CreateEmployee.dto';
 import { DepartmentService } from '../services/department.service';
+import { UpdateEmployeeStatusDto } from '../DTOs/employee/UpdateEmployeeStatus.dto';
+import { flatErrors } from '../utils/tools';
+import { UpdateEmployeeDepartmentDto } from '../DTOs/employee/UpdateEmployeeDepartment.dto';
 
 const EmployeeRoutes = Router();
 const employeeService = new EmployeeService();
@@ -36,13 +39,11 @@ const departmentService = new DepartmentService();
  */
 EmployeeRoutes.post('/', async (req, res) => {
   try {
-    const errors = await validate(plainToInstance(CreateEmployeeDto, req.body));
+    const employeDto = plainToInstance(CreateEmployeeDto, req.body);
 
-    if (errors.length > 0) {
-      throw new BadRequest(errors.join('\n'));
-    }
+    flatErrors(await validate(employeDto));
 
-    const newEmployee = await employeeService.create(req.body);
+    const newEmployee = await employeeService.create(employeDto);
 
     res.status(201).json(newEmployee);
   } catch (error: any) {
@@ -151,11 +152,8 @@ EmployeeRoutes.put('/:id', async (req, res) => {
     }
 
     const employeeDto = plainToInstance(UpdateEmployeeDto, req.body);
-    const errors = await validate(employeeDto);
 
-    if (errors.length > 0) {
-      throw new BadRequest(errors.join('\n'));
-    }
+    flatErrors(await validate(employeeDto));
 
     const updatedEmployee = await employeeService.update(
       employeeId,
@@ -239,6 +237,108 @@ EmployeeRoutes.get('/:id/department-history', async (req, res) => {
     const history = await departmentService.getHistory(employeeId);
 
     res.status(200).json(history);
+  } catch (error: any) {
+    res.status(error.status || 400).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /employees/{id}/department:
+ *   patch:
+ *     summary: Update the department for an employee by ID
+ *     tags:
+ *       - Employees
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The employee ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *        application/json:
+ *          schema:
+ *            $ref: '#/components/schemas/UpdateEmployeeDepartmentSchema'
+ *     responses:
+ *       200:
+ *         description: Employee's department updated successfully
+ *       400:
+ *         description: Invalid input or error updating employee
+ *       404:
+ *         description: Employee or Department not found
+ */
+EmployeeRoutes.patch('/:id/department', async (req, res) => {
+  try {
+    const employeeId = parseInt(req.params.id);
+
+    if (isNaN(employeeId)) {
+      throw new BadRequest('Invalid employee ID');
+    }
+
+    const departmentDto = plainToInstance(
+      UpdateEmployeeDepartmentDto,
+      req.body,
+    );
+
+    flatErrors(await validate(departmentDto));
+
+    const updatedEmployee = await employeeService.updateDepartment(
+      employeeId,
+      departmentDto.departmentId,
+    );
+
+    res.status(200).json(updatedEmployee);
+  } catch (error: any) {
+    res.status(error.status || 400).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /employees/{id}/status:
+ *   patch:
+ *     summary: Update an employee's status (active or inactive)
+ *     tags:
+ *       - Employees
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The employee ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateEmployeeStatusSchema'
+ *     responses:
+ *       200:
+ *         description: Employee status updated successfully
+ *       400:
+ *         description: Invalid input or error updating status
+ */
+EmployeeRoutes.patch('/:id/status', async (req, res) => {
+  try {
+    const employeeId = parseInt(req.params.id);
+
+    if (isNaN(employeeId)) {
+      throw new BadRequest('Invalid employee ID');
+    }
+
+    const statusDto = plainToInstance(UpdateEmployeeStatusDto, req.body);
+
+    flatErrors(await validate(statusDto));
+
+    const updatedEmployee = await employeeService.updateStatus(
+      employeeId,
+      statusDto.status,
+    );
+    res.status(200).json(updatedEmployee);
   } catch (error: any) {
     res.status(error.status || 400).json({ error: error.message });
   }
