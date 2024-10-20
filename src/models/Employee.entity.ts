@@ -15,6 +15,9 @@ export class EmployeeEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'varchar' })
+  photoUrl: string;
+
   @Column({ type: 'varchar', length: 50 })
   firstName: string;
 

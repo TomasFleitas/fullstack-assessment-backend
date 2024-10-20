@@ -34,8 +34,10 @@ const departmentService = new DepartmentService();
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/EmployeeSchema'
+ *       404:
+ *         description: Department not found
  *       400:
- *         description: Invalid input
+ *         description: Error creating employee
  */
 EmployeeRoutes.post('/', async (req, res) => {
   try {
@@ -73,8 +75,10 @@ EmployeeRoutes.get('/', async (req, res) => {
     const employees = await employeeService.getAll();
 
     res.status(200).json(employees);
-  } catch (error) {
-    res.status(400).json({ error: 'Error retrieving employees' });
+  } catch (error: any) {
+    res
+      .status(error.status || 400)
+      .json({ error: error.message || 'Error retrieving employees' });
   }
 });
 
@@ -112,8 +116,10 @@ EmployeeRoutes.get('/:id', async (req, res) => {
     const employee = await employeeService.getById(employeeId);
 
     res.status(200).json(employee);
-  } catch (error) {
-    res.status(400).json({ error: 'Error retrieving employee' });
+  } catch (error: any) {
+    res
+      .status(error.status || 400)
+      .json({ error: error.message || 'Error retrieving employees' });
   }
 });
 
@@ -141,7 +147,7 @@ EmployeeRoutes.get('/:id', async (req, res) => {
  *       200:
  *         description: Employee updated successfully
  *       400:
- *         description: Invalid input or error updating employee
+ *         description: Error updating employee
  */
 EmployeeRoutes.put('/:id', async (req, res) => {
   try {
@@ -162,7 +168,9 @@ EmployeeRoutes.put('/:id', async (req, res) => {
 
     res.status(200).json(updatedEmployee);
   } catch (error: any) {
-    res.status(error.status || 400).json({ error: error.message });
+    res
+      .status(error.status || 400)
+      .json({ error: error.message || 'Error updating employee' });
   }
 });
 
@@ -238,7 +246,9 @@ EmployeeRoutes.get('/:id/department-history', async (req, res) => {
 
     res.status(200).json(history);
   } catch (error: any) {
-    res.status(error.status || 400).json({ error: error.message });
+    res
+      .status(error.status || 400)
+      .json({ error: error.message || 'Error retrieving department history' });
   }
 });
 
@@ -266,7 +276,7 @@ EmployeeRoutes.get('/:id/department-history', async (req, res) => {
  *       200:
  *         description: Employee's department updated successfully
  *       400:
- *         description: Invalid input or error updating employee
+ *         description: Error updating employee
  *       404:
  *         description: Employee or Department not found
  */
@@ -292,7 +302,9 @@ EmployeeRoutes.patch('/:id/department', async (req, res) => {
 
     res.status(200).json(updatedEmployee);
   } catch (error: any) {
-    res.status(error.status || 400).json({ error: error.message });
+    res
+      .status(error.status || 400)
+      .json({ error: error.message || 'Error updating employee' });
   }
 });
 
@@ -320,7 +332,7 @@ EmployeeRoutes.patch('/:id/department', async (req, res) => {
  *       200:
  *         description: Employee status updated successfully
  *       400:
- *         description: Invalid input or error updating status
+ *         description: Error updating status
  */
 EmployeeRoutes.patch('/:id/status', async (req, res) => {
   try {
@@ -340,7 +352,9 @@ EmployeeRoutes.patch('/:id/status', async (req, res) => {
     );
     res.status(200).json(updatedEmployee);
   } catch (error: any) {
-    res.status(error.status || 400).json({ error: error.message });
+    res
+      .status(error.status || 400)
+      .json({ error: error.message || 'Error updating status' });
   }
 });
 

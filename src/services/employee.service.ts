@@ -1,4 +1,4 @@
-import { getRepositories } from '../utils/tools';
+import { getRandomAvatar, getRepositories } from '../utils/tools';
 import { EmployeeEntity } from '../models/Employee.entity';
 import { DepartmentEntity } from '../models/Department.entity';
 import { DepartmentHistoryEntity } from '../models/DepartmentHistory.entity';
@@ -38,6 +38,9 @@ export class EmployeeService {
         newEmployee.department = department;
       }
 
+      const { id, gender } = getRandomAvatar();
+      newEmployee.photoUrl = `https://getrandomavatar-krlj4alcwa-uc.a.run.app/getRandomAvatar?gender=${gender}&id=${id}`;
+
       await employeeRepository.save(newEmployee);
 
       if (department) {
@@ -75,45 +78,43 @@ export class EmployeeService {
   }
 
   async update(id: number, updateEmployee: UpdateEmployeeDto) {
-    const [
-      employeeRepository,
-      departmentRepository,
-      departmentHistoryRepository,
-    ] = getRepositories(
-      EmployeeEntity,
-      DepartmentEntity,
-      DepartmentHistoryEntity,
-    );
+    const dataSource = Database.getInstance().getDataSource();
 
-    const employee = await this.getById(id);
+    return await dataSource.transaction(async transaction => {
+      const employeeRepository = transaction.getRepository(EmployeeEntity);
+      const departmentRepository = transaction.getRepository(DepartmentEntity);
+      const departmentHistoryRepository = transaction.getRepository(
+        DepartmentHistoryEntity,
+      );
 
-    let newDepartment;
-    if (updateEmployee.departmentId) {
-      newDepartment = await departmentRepository.findOne({
-        where: { id: updateEmployee.departmentId },
-      });
+      const employee = await this.getById(id);
 
-      if (!newDepartment) {
-        throw new NotFound('Department not found');
+      let newDepartment;
+      if (updateEmployee.departmentId) {
+        newDepartment = await departmentRepository.findOne({
+          where: { id: updateEmployee.departmentId },
+        });
+        if (!newDepartment) {
+          throw new NotFound('Department not found');
+        }
       }
-    }
 
-    const updatedEmployee = employeeRepository.merge(employee, {
-      ...updateEmployee,
-      department: newDepartment || employee.department,
-    });
-
-    if (employee.department?.id !== newDepartment?.id) {
-      const departmentHistoryRecord = departmentHistoryRepository.create({
-        employee: updatedEmployee,
-        department: newDepartment,
+      const updatedEmployee = employeeRepository.merge(employee, {
+        ...updateEmployee,
+        department: newDepartment || employee.department,
       });
-      await departmentHistoryRepository.save(departmentHistoryRecord);
-    }
 
-    await employeeRepository.save(updatedEmployee);
+      if (employee.department?.id !== newDepartment?.id) {
+        const departmentHistoryRecord = departmentHistoryRepository.create({
+          employee: updatedEmployee,
+          department: newDepartment,
+        });
+        await departmentHistoryRepository.save(departmentHistoryRecord);
+      }
 
-    return updatedEmployee;
+      await employeeRepository.save(updatedEmployee);
+      return updatedEmployee;
+    });
   }
 
   async deleteEmployee(id: number) {
@@ -129,38 +130,39 @@ export class EmployeeService {
   }
 
   async updateDepartment(employeeId: number, departmentId: number) {
-    const [
-      employeeRepository,
-      departmentRepository,
-      departmentHistoryRepository,
-    ] = getRepositories(
-      EmployeeEntity,
-      DepartmentEntity,
-      DepartmentHistoryEntity,
-    );
+    const dataSource = Database.getInstance().getDataSource();
 
-    const employee = await this.getById(employeeId);
+    return await dataSource.transaction(async transaction => {
+      const employeeRepository = transaction.getRepository(EmployeeEntity);
+      const departmentRepository = transaction.getRepository(DepartmentEntity);
+      const departmentHistoryRepository = transaction.getRepository(
+        DepartmentHistoryEntity,
+      );
 
-    const newDepartment = await departmentRepository.findOne({
-      where: { id: departmentId },
-    });
+      const employee = await this.getById(employeeId);
 
-    if (!newDepartment) {
-      throw new NotFound('Department not found');
-    }
-
-    if (employee.department?.id !== newDepartment.id) {
-      employee.department = newDepartment;
-      const departmentHistory = departmentHistoryRepository.create({
-        employee: employee,
-        department: newDepartment,
+      const newDepartment = await departmentRepository.findOne({
+        where: { id: departmentId },
       });
-      await departmentHistoryRepository.save(departmentHistory);
-    }
 
-    await employeeRepository.save(employee);
+      if (!newDepartment) {
+        throw new NotFound('Department not found');
+      }
 
-    return employee;
+      if (employee.department?.id !== newDepartment.id) {
+        employee.department = newDepartment;
+
+        const departmentHistory = departmentHistoryRepository.create({
+          employee: employee,
+          department: newDepartment,
+        });
+        await departmentHistoryRepository.save(departmentHistory);
+      }
+
+      await employeeRepository.save(employee);
+
+      return employee;
+    });
   }
 
   async updateStatus(id: number, status: string) {

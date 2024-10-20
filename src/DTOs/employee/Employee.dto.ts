@@ -55,6 +55,10 @@ export const EmployeeSchema = {
       description: 'Last name of the employee',
       example: 'Doe',
     },
+    photoUrl: {
+      type: 'string',
+      description: 'Employee photo',
+    },
     hireDate: {
       type: 'string',
       format: 'date',

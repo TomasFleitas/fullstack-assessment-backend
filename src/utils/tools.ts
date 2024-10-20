@@ -20,3 +20,33 @@ export const flatErrors = (errors: ValidationError[]) => {
     throw new BadRequest(errorMessages.join(', '));
   }
 };
+
+export const getRandomAvatar = (gender?: 'female' | 'male') => {
+  const femaleCount = 61;
+  const maleCount = 63;
+
+  if (gender === 'female') {
+    return {
+      id: Math.floor(Math.random() * femaleCount) + 1,
+      gender: 'female',
+    };
+  } else if (gender === 'male') {
+    return {
+      id: Math.floor(Math.random() * maleCount) + 1,
+      gender: 'male',
+    };
+  } else {
+    const randomGender = Math.random() < 0.5 ? 'female' : 'male';
+    if (randomGender === 'female') {
+      return {
+        id: Math.floor(Math.random() * femaleCount) + 1,
+        gender: 'female',
+      };
+    } else {
+      return {
+        id: Math.floor(Math.random() * maleCount) + 1,
+        gender: 'male',
+      };
+    }
+  }
+};

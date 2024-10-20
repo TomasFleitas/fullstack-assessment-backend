@@ -21,7 +21,7 @@ if (!isProdEnv) {
 
 // Routes
 app.use('/employees', EmployeeRoutes);
-app.use('/department', DepartmentRoutes);
+app.use('/departments', DepartmentRoutes);
 
 // Default endpoint
 app.get('/', (req, res) => {

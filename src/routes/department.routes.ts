@@ -30,7 +30,9 @@ DepartmentRoutes.get('/', async (req, res) => {
 
     res.status(200).json(departments);
   } catch (error: any) {
-    res.status(error.status || 400).json({ error: error.message });
+    res
+      .status(error.status || 400)
+      .json({ error: error.message || 'Error retrieving departments' });
   }
 });
 
