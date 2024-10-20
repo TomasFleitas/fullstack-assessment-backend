@@ -23,7 +23,7 @@ export class UpdateEmployeeDto {
   @IsOptional()
   departmentId?: number;
 
-  @IsPhoneNumber()
+  @IsString()
   @IsOptional()
   phone?: string;
 

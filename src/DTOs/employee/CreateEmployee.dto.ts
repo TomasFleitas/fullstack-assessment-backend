@@ -23,7 +23,7 @@ export class CreateEmployeeDto {
   @IsNotEmpty()
   departmentId: number;
 
-  @IsPhoneNumber()
+  @IsString()
   @IsOptional()
   phone?: string;
 

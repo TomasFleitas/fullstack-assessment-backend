@@ -90,27 +90,29 @@ export class EmployeeService {
       const employee = await this.getById(id);
 
       let newDepartment;
-      if (updateEmployee.departmentId) {
+      if (
+        updateEmployee.departmentId &&
+        employee.department?.id !== updateEmployee?.departmentId
+      ) {
         newDepartment = await departmentRepository.findOne({
           where: { id: updateEmployee.departmentId },
         });
+
         if (!newDepartment) {
           throw new NotFound('Department not found');
         }
+
+        const departmentHistoryRecord = departmentHistoryRepository.create({
+          employee: employee,
+          department: newDepartment,
+        });
+        await departmentHistoryRepository.save(departmentHistoryRecord);
       }
 
       const updatedEmployee = employeeRepository.merge(employee, {
         ...updateEmployee,
         department: newDepartment || employee.department,
       });
-
-      if (employee.department?.id !== newDepartment?.id) {
-        const departmentHistoryRecord = departmentHistoryRepository.create({
-          employee: updatedEmployee,
-          department: newDepartment,
-        });
-        await departmentHistoryRepository.save(departmentHistoryRecord);
-      }
 
       await employeeRepository.save(updatedEmployee);
       return updatedEmployee;
